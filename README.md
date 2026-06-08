@@ -168,8 +168,7 @@ Uses **CTEs** (`WITH` clauses) to combine consistency, YoY improvement, and valu
 
 ## 👤 Author
 
-**Dwaipayan Chatterjee**
-M.Sc. Economics — West Bengal State University
+**Daipayan Chatterjee**
 GitHub: [@dchatterjee01-prog](https://github.com/dchatterjee01-prog)
 
 ---
