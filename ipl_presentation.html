@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPL Franchise Scout — SQL Portfolio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --dark:    #0d1117;
+    --card:    #161b22;
+    --border:  #21262d;
+    --green:   #0f9b6e;
+    --green2:  #1db98a;
+    --gold:    #e8a838;
+    --red:     #e05c5c;
+    --blue:    #3a7abf;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --mono:    'Space Mono', monospace;
+    --sans:    'Space Grotesk', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow: hidden;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 28px;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-brand { font-family: var(--mono); font-size: 12px; color: var(--green); letter-spacing: 0.08em; }
+  .nav-pills { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .pill {
+    width: 28px; height: 6px; border-radius: 3px;
+    background: var(--border); cursor: pointer; transition: background 0.2s;
+  }
+  .pill.active { background: var(--green); }
+  .pill:hover  { background: var(--green2); }
+  .nav-counter { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  /* ── SLIDES ── */
+  .deck { height: 100vh; overflow: hidden; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 72px 48px 48px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .slide.active { opacity: 1; pointer-events: all; }
+
+  /* ── ARROWS ── */
+  .arrow {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); font-size: 18px;
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 100; transition: border-color 0.2s, background 0.2s;
+  }
+  .arrow:hover { border-color: var(--green); background: #1a2730; }
+  .arrow.left  { left: 12px; }
+  .arrow.right { right: 12px; }
+
+  /* ── SLIDE LABEL ── */
+  .slide-eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+    color: var(--green); text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  /* ── SHARED CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card-sm { padding: 14px 18px; border-radius: 10px; }
+
+  /* ════════════════════════════════
+     SLIDE 1 — HOOK
+  ════════════════════════════════ */
+  .s1-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; text-align: center; gap: 24px; max-width: 700px;
+  }
+  .s1-hero {
+    font-family: var(--mono); font-size: clamp(48px,8vw,96px);
+    color: var(--green); line-height: 1; letter-spacing: -0.02em;
+  }
+  .s1-sub { font-size: clamp(18px,2.5vw,26px); font-weight: 600; line-height: 1.3; }
+  .s1-body { font-size: 14px; color: var(--muted); max-width: 480px; line-height: 1.7; }
+  .s1-tags { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .tag {
+    font-family: var(--mono); font-size: 11px;
+    padding: 4px 12px; border-radius: 20px;
+    border: 1px solid; letter-spacing: 0.06em;
+  }
+  .tag-g { border-color: var(--green); color: var(--green); }
+  .tag-o { border-color: var(--gold);  color: var(--gold);  }
+  .tag-b { border-color: var(--blue);  color: var(--blue);  }
+
+  /* ════════════════════════════════
+     SLIDE 2 — PROBLEM
+  ════════════════════════════════ */
+  .s2-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 860px; width: 100%; }
+  .s2-left { display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+  .s2-title { font-size: clamp(20px,2.8vw,32px); font-weight: 700; line-height: 1.25; }
+  .s2-body  { font-size: 14px; color: var(--muted); line-height: 1.75; }
+  .vs-grid  { display: flex; flex-direction: column; gap: 12px; }
+  .vs-row   { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+  .vs-bad   { background: #2a1a1a; border: 1px solid #5c2a2a; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #e05c5c; }
+  .vs-good  { background: #0d2a1e; border: 1px solid var(--green); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--green2); }
+  .vs-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: center; }
+
+  /* ════════════════════════════════
+     SLIDE 3 — WORKFLOW
+  ════════════════════════════════ */
+  .s3-wrap { display: flex; flex-direction: column; gap: 20px; max-width: 820px; width: 100%; }
+  .s3-title { font-size: clamp(18px,2.5vw,28px); font-weight: 700; }
+  .pipeline { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+  .pipe-step {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 12px; text-align: center;
+    position: relative;
+  }
+  .pipe-step::after {
+    content: '→'; position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+    color: var(--green); font-size: 16px; z-index: 1;
+  }
+  .pipe-step:last-child::after { display: none; }
+  .pipe-num  { font-family: var(--mono); font-size: 10px; color: var(--green); margin-bottom: 6px; }
+  .pipe-name { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .pipe-sql  { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .s3-dataset { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  .ds-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; text-align: center;
+  }
+  .ds-num  { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--green2); }
+  .ds-label{ font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ════════════════════════════════
+     SLIDE 4 — TEAM DEPENDENCY
+  ════════════════════════════════ */
+  .s4-wrap { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; max-width: 900px; width: 100%; }
+  .s4-left { display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+  .s4-title { font-size: clamp(18px,2.4vw,26px); font-weight: 700; line-height: 1.3; }
+  .highlight-stat { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--red); }
+  .sql-chip {
+    display: inline-block; font-family: var(--mono); font-size: 10px;
+    background: #0d2a1e; border: 1px solid var(--green);
+    color: var(--green); padding: 4px 10px; border-radius: 6px;
+  }
+  .dep-bars { display: flex; flex-direction: column; gap: 8px; }
+  .dep-row  { display: flex; flex-direction: column; gap: 4px; }
+  .dep-meta { display: flex; justify-content: space-between; font-size: 12px; }
+  .dep-team { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .dep-pct  { color: var(--text); font-weight: 600; }
+  .dep-bar-bg { background: var(--border); border-radius: 4px; height: 8px; overflow: hidden; }
+  .dep-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+  /* ════════════════════════════════
+     SLIDE 5 — YOY
+  ════════════════════════════════ */
+  .s5-wrap { display: grid; grid-template-columns: 1fr 1.3fr; gap: 28px; max-width: 900px; width: 100%; }
+  .s5-left { display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+  .s5-title { font-size: clamp(18px,2.4vw,26px); font-weight: 700; line-height: 1.3; }
+  .yoy-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .yoy-table th { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .yoy-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .yoy-table tr:last-child td { border-bottom: none; }
+  .up { color: var(--green2); font-weight: 600; }
+  .down { color: var(--red); font-weight: 600; }
+
+  /* ════════════════════════════════
+     SLIDE 6 — CONSISTENCY
+  ════════════════════════════════ */
+  .s6-wrap { display: grid; grid-template-columns: 1fr 1.3fr; gap: 28px; max-width: 900px; width: 100%; }
+  .s6-left { display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+  .s6-title { font-size: clamp(18px,2.4vw,26px); font-weight: 700; line-height: 1.3; }
+  .score-bars { display: flex; flex-direction: column; gap: 10px; }
+  .score-row  { display: grid; grid-template-columns: 130px 1fr 50px; align-items: center; gap: 10px; font-size: 12px; }
+  .score-name { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .score-bar-bg { background: var(--border); border-radius: 4px; height: 10px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 4px; }
+  .score-val  { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+  /* ════════════════════════════════
+     SLIDE 7 — BOWLING
+  ════════════════════════════════ */
+  .s7-wrap { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; max-width: 900px; width: 100%; }
+  .s7-left { display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+  .bowl-grid { display: flex; flex-direction: column; gap: 8px; }
+  .bowl-row  {
+    display: grid; grid-template-columns: 140px 50px 60px 1fr;
+    align-items: center; gap: 10px; font-size: 12px;
+    padding: 8px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--border);
+  }
+  .bowl-row.top { border-color: var(--green); }
+  .bowl-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bowl-stat { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; }
+  .bowl-bar-bg { background: var(--border); border-radius: 3px; height: 6px; overflow: hidden; }
+  .bowl-bar-fill { height: 100%; border-radius: 3px; background: var(--blue); }
+  .bowl-row.top .bowl-bar-fill { background: var(--green); }
+
+  /* ════════════════════════════════
+     SLIDE 8 — CTE FINAL SCORE
+  ════════════════════════════════ */
+  .s8-wrap { display: grid; grid-template-columns: 1fr 1.2fr; gap: 28px; max-width: 900px; width: 100%; }
+  .s8-left { display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+  .cte-box {
+    background: #0a1628; border: 1px solid var(--blue);
+    border-radius: 10px; padding: 14px 16px;
+    font-family: var(--mono); font-size: 11px; line-height: 1.8;
+    color: #a8c4e0; overflow-x: auto;
+  }
+  .kw  { color: #569cd6; }
+  .fn  { color: #dcdcaa; }
+  .str { color: #ce9178; }
+  .cm  { color: #6a9955; }
+  .final-bars { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .fb-row { display: grid; grid-template-columns: 120px 1fr 55px; align-items: center; gap: 10px; font-size: 12px; }
+  .fb-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fb-bar-bg { background: var(--border); border-radius: 4px; height: 10px; overflow: hidden; }
+  .fb-bar-fill { height: 100%; border-radius: 4px; }
+  .fb-val { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+  /* ════════════════════════════════
+     SLIDE 9 — FINAL SQUAD
+  ════════════════════════════════ */
+  .s9-wrap { display: flex; flex-direction: column; gap: 20px; max-width: 820px; width: 100%; }
+  .s9-title { font-size: clamp(18px,2.5vw,28px); font-weight: 700; text-align: center; }
+  .squad-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .squad-card {
+    border-radius: 12px; padding: 20px 16px; text-align: center;
+    border: 1px solid; display: flex; flex-direction: column; gap: 8px;
+  }
+  .sq-role  { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; }
+  .sq-name  { font-size: 15px; font-weight: 700; line-height: 1.2; }
+  .sq-team  { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .sq-stat  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .sq-score { font-family: var(--mono); font-size: 18px; font-weight: 700; margin-top: 4px; }
+  .budget-note {
+    text-align: center; font-family: var(--mono); font-size: 12px;
+    color: var(--muted); border-top: 1px solid var(--border); padding-top: 14px;
+  }
+
+  /* ════════════════════════════════
+     SLIDE 10 — SKILLS + CTA
+  ════════════════════════════════ */
+  .s10-wrap { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; max-width: 880px; width: 100%; }
+  .s10-left { display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+  .skills-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-tag {
+    font-family: var(--mono); font-size: 11px;
+    padding: 5px 12px; border-radius: 6px;
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+  }
+  .skill-tag.highlight { border-color: var(--green); color: var(--green); background: #0d2a1e; }
+  .next-list { display: flex; flex-direction: column; gap: 8px; }
+  .next-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--muted);
+  }
+  .next-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+  .github-box {
+    background: var(--card); border: 1px solid var(--green);
+    border-radius: 10px; padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .gh-label { font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: 0.1em; }
+  .gh-link  { font-family: var(--mono); font-size: 12px; color: var(--text); word-break: break-all; }
+  .author   { font-size: 13px; color: var(--muted); }
+  .author strong { color: var(--text); }
+
+  /* ── KEYBOARD HINT ── */
+  .kbd-hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    background: var(--card); border: 1px solid var(--border);
+    padding: 5px 14px; border-radius: 20px; z-index: 100;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-brand">IPL_SCOUT.SQL</span>
+  <div class="nav-pills" id="pills"></div>
+  <span class="nav-counter" id="counter">01 / 10</span>
+</nav>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active" data-slide="0">
+    <div class="s1-wrap">
+      <div class="s1-hero">₹10Cr</div>
+      <div class="s1-sub">4 players. 2 seasons of data.<br>1 SQL-powered franchise scout model.</div>
+      <div class="s1-body">
+        Which 2 batsmen and 2 bowlers would you buy for IPL 2020 — if the data made the decision?
+        This project answers that question using MySQL, window functions, CTEs, and a custom scoring model.
+      </div>
+      <div class="s1-tags">
+        <span class="tag tag-g">MySQL</span>
+        <span class="tag tag-g">Window Functions</span>
+        <span class="tag tag-g">CTEs</span>
+        <span class="tag tag-o">200 rows · 4 tables</span>
+        <span class="tag tag-b">IPL 2018 &amp; 2019</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide" data-slide="1">
+    <div class="s2-wrap">
+      <div class="s2-left">
+        <div class="slide-eyebrow">Slide 02 — Problem</div>
+        <div class="s2-title">The problem with picking players on reputation alone</div>
+        <div class="s2-body">
+          Franchise decisions are often driven by big names and gut feel. But reputation is a lagging indicator — 
+          it tells you who was good, not who is in form. I wanted a data-driven approach.
+        </div>
+        <span class="sql-chip">SOLUTION: 5-query analytical pipeline</span>
+      </div>
+      <div class="vs-grid">
+        <div class="vs-row">
+          <div class="vs-bad">Reputation-based pick</div>
+          <div class="vs-label">VS</div>
+          <div class="vs-good">Data-backed pick</div>
+        </div>
+        <div class="vs-row">
+          <div class="vs-bad">Last season's headlines</div>
+          <div class="vs-label">→</div>
+          <div class="vs-good">YoY improvement score</div>
+        </div>
+        <div class="vs-row">
+          <div class="vs-bad">Total runs only</div>
+          <div class="vs-label">→</div>
+          <div class="vs-good">Consistency formula</div>
+        </div>
+        <div class="vs-row">
+          <div class="vs-bad">Wickets only</div>
+          <div class="vs-label">→</div>
+          <div class="vs-good">Economy + wickets index</div>
+        </div>
+        <div class="vs-row">
+          <div class="vs-bad">Single-season view</div>
+          <div class="vs-label">→</div>
+          <div class="vs-good">2-season composite score</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide" data-slide="2">
+    <div class="s3-wrap">
+      <div>
+        <div class="slide-eyebrow">Slide 03 — Workflow</div>
+        <div class="s3-title" style="margin-bottom:6px">5 business questions. 5 SQL queries.</div>
+        <div style="font-size:13px;color:var(--muted)">Each query answers a real franchise decision — not a textbook exercise.</div>
+      </div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="pipe-num">Q1</div>
+          <div class="pipe-name">Consistency Score</div>
+          <div class="pipe-sql">WHERE · ORDER BY</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">Q2</div>
+          <div class="pipe-name">YoY Form</div>
+          <div class="pipe-sql">JOIN · 2 tables</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">Q3</div>
+          <div class="pipe-name">Team Dependency</div>
+          <div class="pipe-sql">PARTITION BY</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">Q4</div>
+          <div class="pipe-name">Bowl Impact</div>
+          <div class="pipe-sql">Custom formula</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">Q5</div>
+          <div class="pipe-name">Final Score</div>
+          <div class="pipe-sql">CTE · UNION ALL</div>
+        </div>
+      </div>
+      <div class="s3-dataset">
+        <div class="ds-card"><div class="ds-num">4</div><div class="ds-label">Tables</div></div>
+        <div class="ds-card"><div class="ds-num">200</div><div class="ds-label">Total rows</div></div>
+        <div class="ds-card"><div class="ds-num">2</div><div class="ds-label">Seasons</div></div>
+        <div class="ds-card"><div class="ds-num">7</div><div class="ds-label">SQL files</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide" data-slide="3">
+    <div class="s4-wrap">
+      <div class="s4-left">
+        <div class="slide-eyebrow">Slide 04 — Window Function</div>
+        <div class="s4-title">One team carried 35% of their own runs — and it wasn't RCB</div>
+        <div class="highlight-stat">34.67%</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
+          Warner alone contributed 34.67% of SRH's total runs — the highest single-player dependency of any team.
+          Delhi Capitals, by contrast, spread the load across 3 players almost equally.
+        </div>
+        <span class="sql-chip">SUM() OVER (PARTITION BY Team)</span>
+      </div>
+      <div class="card" style="width:100%">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:14px">% of team runs — top contributor per team</div>
+        <div class="dep-bars">
+          <div class="dep-row">
+            <div class="dep-meta"><span>Warner (SRH)</span><span class="dep-pct" style="color:var(--red)">34.67%</span></div>
+            <div class="dep-bar-bg"><div class="dep-bar-fill" style="width:100%;background:var(--red)"></div></div>
+          </div>
+          <div class="dep-row">
+            <div class="dep-meta"><span>Kohli + ABD (RCB)</span><span class="dep-pct" style="color:var(--gold)">50.11% combined</span></div>
+            <div class="dep-bar-bg"><div class="dep-bar-fill" style="width:72%;background:var(--gold)"></div></div>
+          </div>
+          <div class="dep-row">
+            <div class="dep-meta"><span>Russell (KKR)</span><span class="dep-pct">24.40%</span></div>
+            <div class="dep-bar-bg"><div class="dep-bar-fill" style="width:70%;background:var(--blue)"></div></div>
+          </div>
+          <div class="dep-row">
+            <div class="dep-meta"><span>Rahul (KXIP)</span><span class="dep-pct">27.70%</span></div>
+            <div class="dep-bar-bg"><div class="dep-bar-fill" style="width:80%;background:var(--blue)"></div></div>
+          </div>
+          <div class="dep-row">
+            <div class="dep-meta"><span>Dhawan (DC)</span><span class="dep-pct" style="color:var(--green2)">27.29%</span></div>
+            <div class="dep-bar-bg"><div class="dep-bar-fill" style="width:79%;background:var(--green)"></div></div>
+          </div>
+          <div class="dep-row">
+            <div class="dep-meta"><span class="dep-team">DC balanced: Dhawan 27% · Pant 25% · Iyer 24%</span></div>
+            <div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide" data-slide="4">
+    <div class="s5-wrap">
+      <div class="s5-left">
+        <div class="slide-eyebrow">Slide 05 — JOIN Analysis</div>
+        <div class="s5-title">The most improved player in 2019 wasn't who you'd expect</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
+          JOINing 2018 and 2019 tables reveals who peaked heading into IPL 2020. Russell's average jumped +27.94.
+          Pandya's strike rate exploded +58 points. Both in career-best form.
+        </div>
+        <span class="sql-chip">JOIN batsmen_2018 ON batsmen_2019.Player</span>
+      </div>
+      <div class="card" style="width:100%">
+        <table class="yoy-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Avg 2018</th>
+              <th>Avg 2019</th>
+              <th>Δ Avg</th>
+              <th>Δ SR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Russell</td><td>28.73</td><td>56.67</td><td class="up">+27.94</td><td class="up">+20.02</td></tr>
+            <tr><td>Pandey</td><td>25.82</td><td>43.00</td><td class="up">+17.18</td><td class="up">+15.35</td></tr>
+            <tr><td>Pandya</td><td>28.89</td><td>44.67</td><td class="up">+15.78</td><td class="up">+58.10</td></tr>
+            <tr><td>Pollard</td><td>19.00</td><td>34.88</td><td class="up">+15.88</td><td class="up">+23.74</td></tr>
+            <tr><td>Dhoni</td><td>75.83</td><td>83.20</td><td class="up">+7.37</td><td class="down">−16.03</td></tr>
+            <tr><td>Uthappa</td><td>21.94</td><td>31.33</td><td class="up">+9.39</td><td class="down">−17.35</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide" data-slide="5">
+    <div class="s6-wrap">
+      <div class="s6-left">
+        <div class="slide-eyebrow">Slide 06 — Consistency Score</div>
+        <div class="s6-title">A 204 strike rate. And his average was still 56.</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
+          Most explosive batsmen sacrifice average for strike rate. Russell did neither.
+          Consistency score 109.78 — highest in the dataset.
+        </div>
+        <div class="card card-sm" style="font-family:var(--mono);font-size:11px;color:var(--muted)">
+          Score = (Avg × 0.5) + (SR × 0.3)<br>+ ((50s + 100s×2) × 5)
+        </div>
+        <span class="sql-chip">Custom weighted formula</span>
+      </div>
+      <div class="card" style="width:100%">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:14px">Consistency Score — IPL 2019 (min 8 innings)</div>
+        <div class="score-bars">
+          <div class="score-row"><span class="score-name">Warner</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:100%;background:var(--green)"></div></div><span class="score-val">127.76</span></div>
+          <div class="score-row"><span class="score-name">Russell</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:86%;background:var(--green2)"></div></div><span class="score-val">109.78</span></div>
+          <div class="score-row"><span class="score-name">Rahul</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:84%;background:var(--blue)"></div></div><span class="score-val">107.57</span></div>
+          <div class="score-row"><span class="score-name">Dhoni</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:76%;background:var(--blue)"></div></div><span class="score-val">96.99</span></div>
+          <div class="score-row"><span class="score-name">Bairstow</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:74%;background:var(--blue)"></div></div><span class="score-val">94.99</span></div>
+          <div class="score-row"><span class="score-name">de Villiers</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:73%;background:var(--blue)"></div></div><span class="score-val">93.30</span></div>
+          <div class="score-row"><span class="score-name">Gayle</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:68%;background:var(--muted)"></div></div><span class="score-val">86.50</span></div>
+          <div class="score-row"><span class="score-name">Pandya</span><div class="score-bar-bg"><div class="score-bar-fill" style="width:66%;background:var(--muted)"></div></div><span class="score-val">84.76</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7 -->
+  <div class="slide" data-slide="6">
+    <div class="s7-wrap">
+      <div class="s7-left">
+        <div class="slide-eyebrow">Slide 07 — Bowling Impact</div>
+        <div class="s7-title">The bowler with the best economy also took the most wickets</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
+          Rashid Khan: 21 wickets at ER 6.74. Control AND breakthroughs — the rarest combination in T20.
+          Bumrah: only 17 wickets but ER 6.89, the second-best economy in the list.
+        </div>
+        <div class="card card-sm" style="font-family:var(--mono);font-size:11px;color:var(--muted)">
+          Impact = (Wkts×10) − (ER×5) − (Avg×0.5)
+        </div>
+        <span class="sql-chip">Multi-metric scoring formula</span>
+      </div>
+      <div style="width:100%">
+        <div style="display:grid;grid-template-columns:140px 50px 60px 1fr;gap:10px;font-family:var(--mono);font-size:10px;color:var(--muted);padding:0 12px 8px;">
+          <span>Player</span><span>Wkts</span><span>ER</span><span>Impact</span>
+        </div>
+        <div class="bowl-grid">
+          <div class="bowl-row top"><span class="bowl-name" style="color:var(--green)">Rashid Khan</span><span class="bowl-stat">21</span><span class="bowl-stat" style="color:var(--green)">6.74</span><div class="bowl-bar-bg"><div class="bowl-bar-fill" style="width:87%"></div></div></div>
+          <div class="bowl-row"><span class="bowl-name">Tye</span><span class="bowl-stat">24</span><span class="bowl-stat" style="color:var(--red)">8.00</span><div class="bowl-bar-bg"><div class="bowl-bar-fill" style="width:100%"></div></div></div>
+          <div class="bowl-row"><span class="bowl-name">Kaul</span><span class="bowl-stat">21</span><span class="bowl-stat">8.29</span><div class="bowl-bar-bg"><div class="bowl-bar-fill" style="width:82%"></div></div></div>
+          <div class="bowl-row"><span class="bowl-name">Yadav U.T.</span><span class="bowl-stat">20</span><span class="bowl-stat">7.86</span><div class="bowl-bar-bg"><div class="bowl-bar-fill" style="width:79%"></div></div></div>
+          <div class="bowl-row top"><span class="bowl-name" style="color:var(--green)">Bumrah</span><span class="bowl-stat">17</span><span class="bowl-stat" style="color:var(--green)">6.89</span><div class="bowl-bar-bg"><div class="bowl-bar-fill" style="width:66%"></div></div></div>
+          <div class="bowl-row"><span class="bowl-name">Boult</span><span class="bowl-stat">18</span><span class="bowl-stat">8.85</span><div class="bowl-bar-bg"><div class="bowl-bar-fill" style="width:65%"></div></div></div>
+          <div class="bowl-row"><span class="bowl-name">Narine</span><span class="bowl-stat">17</span><span class="bowl-stat">7.66</span><div class="bowl-bar-bg"><div class="bowl-bar-fill" style="width:62%"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8 -->
+  <div class="slide" data-slide="7">
+    <div class="s8-wrap">
+      <div class="s8-left">
+        <div class="slide-eyebrow">Slide 08 — CTE Query</div>
+        <div class="s8-title" style="font-size:clamp(18px,2.4vw,26px);font-weight:700;line-height:1.3">The final score: combining all 5 signals into one number</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7">
+          A CTE combines consistency (40%), YoY improvement (30%), and value per match (30%) into a single final_score.
+          The SQL did the scouting.
+        </div>
+        <div class="cte-box">
+          <span class="kw">WITH</span> batsman_scores <span class="kw">AS</span> (<br>
+          &nbsp;&nbsp;<span class="kw">SELECT</span> Player, Team,<br>
+          &nbsp;&nbsp;<span class="fn">ROUND</span>(...) <span class="kw">AS</span> consistency_score,<br>
+          &nbsp;&nbsp;<span class="fn">ROUND</span>(b19.Avg - b18.Avg) <span class="kw">AS</span> improvement,<br>
+          &nbsp;&nbsp;<span class="fn">ROUND</span>(...) <span class="kw">AS</span> value_index<br>
+          &nbsp;&nbsp;<span class="kw">FROM</span> batsmen_2019 b19<br>
+          &nbsp;&nbsp;<span class="kw">JOIN</span> batsmen_2018 b18 <span class="kw">ON</span> b19.Player = b18.Player<br>
+          )<br>
+          <span class="kw">SELECT</span> *, <span class="fn">ROUND</span>(<br>
+          &nbsp;&nbsp;(consistency_score × 0.4)<br>
+          &nbsp;&nbsp;+ (improvement × 0.3)<br>
+          &nbsp;&nbsp;+ (value_index × 0.3), 2) <span class="kw">AS</span> final_score<br>
+          <span class="kw">FROM</span> batsman_scores<br>
+          <span class="kw">ORDER BY</span> final_score <span class="kw">DESC</span>;
+        </div>
+      </div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:12px;justify-content:center">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Final Score — Top Batsmen</div>
+        <div class="final-bars">
+          <div class="fb-row"><span class="fb-name" style="color:var(--green)">Russell</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:100%;background:var(--green)"></div></div><span class="fb-val">74.68</span></div>
+          <div class="fb-row"><span class="fb-name">Rahul</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:80%;background:var(--blue)"></div></div><span class="fb-val">59.93</span></div>
+          <div class="fb-row"><span class="fb-name">Pandya</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:71%;background:var(--blue)"></div></div><span class="fb-val">53.07</span></div>
+          <div class="fb-row"><span class="fb-name">Dhoni</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:70%;background:var(--blue)"></div></div><span class="fb-val">52.21</span></div>
+          <div class="fb-row"><span class="fb-name">Gayle</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:70%;background:var(--muted)"></div></div><span class="fb-val">51.95</span></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px">Final Score — Top Bowlers</div>
+        <div class="final-bars">
+          <div class="fb-row"><span class="fb-name" style="color:var(--gold)">Rashid Khan</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:100%;background:var(--gold)"></div></div><span class="fb-val">67.37</span></div>
+          <div class="fb-row"><span class="fb-name">Tye</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:100%;background:var(--blue)"></div></div><span class="fb-val">77.30</span></div>
+          <div class="fb-row"><span class="fb-name" style="color:var(--gold)">Bumrah</span><div class="fb-bar-bg"><div class="fb-bar-fill" style="width:76%;background:var(--gold)"></div></div><span class="fb-val">50.98</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9 -->
+  <div class="slide" data-slide="8">
+    <div class="s9-wrap">
+      <div class="slide-eyebrow" style="text-align:center">Slide 09 — Final Recommendation</div>
+      <div class="s9-title">The ₹10 Crore squad — backed by data, not opinion</div>
+      <div class="squad-grid">
+        <div class="squad-card" style="border-color:var(--green);background:#0a1f16">
+          <div class="sq-role" style="color:var(--green)">BATSMAN 01</div>
+          <div class="sq-name">Andre Russell</div>
+          <div class="sq-team">KKR</div>
+          <div class="sq-stat">SR 204 · Avg 56.67<br>+27.94 YoY improvement</div>
+          <div class="sq-score" style="color:var(--green)">74.68</div>
+        </div>
+        <div class="squad-card" style="border-color:var(--green);background:#0a1f16">
+          <div class="sq-role" style="color:var(--green)">BATSMAN 02</div>
+          <div class="sq-name">KL Rahul</div>
+          <div class="sq-team">KXIP</div>
+          <div class="sq-stat">593 runs · 6 fifties<br>SR 135 · Avg 53.91</div>
+          <div class="sq-score" style="color:var(--green)">59.93</div>
+        </div>
+        <div class="squad-card" style="border-color:var(--gold);background:#1f180a">
+          <div class="sq-role" style="color:var(--gold)">BOWLER 01</div>
+          <div class="sq-name">Rashid Khan</div>
+          <div class="sq-team">SRH</div>
+          <div class="sq-stat">21 wkts · ER 6.74<br>Control + breakthroughs</div>
+          <div class="sq-score" style="color:var(--gold)">67.37</div>
+        </div>
+        <div class="squad-card" style="border-color:var(--gold);background:#1f180a">
+          <div class="sq-role" style="color:var(--gold)">BOWLER 02</div>
+          <div class="sq-name">Jasprit Bumrah</div>
+          <div class="sq-team">MI</div>
+          <div class="sq-stat">17 wkts · ER 6.89<br>Elite death bowler</div>
+          <div class="sq-score" style="color:var(--gold)">50.98</div>
+        </div>
+      </div>
+      <div class="budget-note">Budget: ₹10 Crore · 2 Batsmen · 2 Bowlers · Balanced roles · Data-driven selection</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10 -->
+  <div class="slide" data-slide="9">
+    <div class="s10-wrap">
+      <div class="s10-left">
+        <div class="slide-eyebrow">Slide 10 — Skills + CTA</div>
+        <div style="font-size:clamp(18px,2.4vw,26px);font-weight:700;line-height:1.3">Skills demonstrated —<br>and what I'd build next</div>
+        <div class="skills-grid">
+          <span class="skill-tag highlight">JOIN</span>
+          <span class="skill-tag highlight">CTE (WITH)</span>
+          <span class="skill-tag highlight">Window Functions</span>
+          <span class="skill-tag highlight">UNION ALL</span>
+          <span class="skill-tag highlight">Custom Scoring</span>
+          <span class="skill-tag">Python Import</span>
+          <span class="skill-tag">MySQL 8.0</span>
+          <span class="skill-tag">Data Cleaning</span>
+          <span class="skill-tag">GitHub</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Coming next:</div>
+        <div class="next-list">
+          <div class="next-item"><div class="next-dot"></div>Python matplotlib visualizations</div>
+          <div class="next-item"><div class="next-dot"></div>Streamlit interactive dashboard</div>
+          <div class="next-item"><div class="next-dot"></div>Tableau / Power BI overlay</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+        <div class="github-box">
+          <div class="gh-label">▸ GITHUB REPOSITORY</div>
+          <div class="gh-link">github.com/dchatterjee01-prog/<br>ipl-sql-portfolio</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">7 SQL files · Python import · Scout report · Full README</div>
+        </div>
+        <div class="card card-sm">
+          <div class="author"><strong>Daipayan Chatterjee</strong></div>
+          <div class="author" style="margin-top:6px;font-size:12px">Data Analyst · SQL · Python · MySQL</div>
+          <div class="author" style="margin-top:4px;font-size:11px;color:var(--muted)">Open to data analyst opportunities</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ARROWS -->
+<button class="arrow left" onclick="go(-1)">&#8592;</button>
+<button class="arrow right" onclick="go(1)">&#8594;</button>
+<div class="kbd-hint">← → arrow keys to navigate</div>
+
+<script>
+  let cur = 0;
+  const total = 10;
+  const slides = document.querySelectorAll('.slide');
+  const pillsEl = document.getElementById('pills');
+  const counterEl = document.getElementById('counter');
+
+  // build pills
+  for (let i = 0; i < total; i++) {
+    const p = document.createElement('div');
+    p.className = 'pill' + (i === 0 ? ' active' : '');
+    p.onclick = () => goTo(i);
+    pillsEl.appendChild(p);
+  }
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    pillsEl.children[cur].classList.remove('active');
+    cur = (n + total) % total;
+    slides[cur].classList.add('active');
+    pillsEl.children[cur].classList.add('active');
+    counterEl.textContent = String(cur + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+  }
+
+  function go(d) { goTo(cur + d); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+  });
+
+  // touch swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => tx = e.touches[0].clientX);
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+  });
+</script>
+</body>
+</html>

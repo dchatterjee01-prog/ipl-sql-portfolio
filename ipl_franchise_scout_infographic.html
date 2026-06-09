@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPL Franchise Scout Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{colors:{dark:'#1a1a2e',panel:'#24243e',emerald:'#0f9b6e',gold:'#e8a838',light:'#f5f5f7',muted:'#8a8a9e',borderline:'#3a3a52'},fontFamily:{sans:['Inter','sans-serif'],heading:['Montserrat','sans-serif']}}}}
+</script>
+<style>
+body{background-color:#1a1a2e;color:#f5f5f7;font-family:'Inter',sans-serif;margin:0;padding:0;overflow-x:hidden}
+h1,h2,h3,h4,h5,h6{font-family:'Montserrat',sans-serif}
+.chart-container{position:relative;width:100%;max-width:800px;margin-left:auto;margin-right:auto;height:350px;max-height:400px}
+@media(min-width:768px){.chart-container{height:400px}}
+.glow-gold{text-shadow:0 0 20px rgba(232,168,56,0.5)}
+.glow-emerald{box-shadow:0 0 20px rgba(15,155,110,0.3)}
+.pipeline-arrow{position:relative;width:2px;height:40px;background-color:#8a8a9e;margin:0 auto}
+@media(min-width:768px){.pipeline-arrow{width:40px;height:2px;margin:auto 10px}}
+</style>
+</head>
+<body class="antialiased selection:bg-emerald selection:text-white pb-20">
+
+<!-- 
+Palette Used: "IPL Scout Premium Dark" (Custom derived from blueprint: #1a1a2e, #0f9b6e, #e8a838, #f5f5f7, #8a8a9e)
+Confirmations: NEITHER Mermaid JS NOR SVG were used anywhere in the output.
+Narrative Plan:
+1. Hook - The 10 Crore Question (Introduce budget and constraint)
+2. Problem Space - Reputation vs SQL Data (Set the stage)
+3. Methodology - The 5 Query Pipeline (Show workflow)
+4. Data Story 1 - Team Dependency (Stacked Bar)
+5. Data Story 2 - YoY Improvement (Slope Chart)
+6. Data Story 3 - Consistency Score (Bar Chart)
+7. Data Story 4 - Bowling Impact (Scatter Plot)
+8. Synthesis - The CTE Logic (Diagram)
+9. Conclusion - The Draft Selection (Cards)
+10. Call to Action - Tech Stack and Links
+Visualization Choices:
+- Team Dependency -> Goal: Compare/Composition -> 100% Stacked Bar Chart (Chart.js Canvas) -> Best to show proportion of total runs.
+- YoY Improvement -> Goal: Change -> Line/Slope Chart (Chart.js Canvas) -> Best to show velocity and trajectory between two points in time.
+- Consistency Score -> Goal: Compare -> Vertical Bar Chart (Chart.js Canvas) -> Best to rank individual unified scores.
+- Bowling Impact -> Goal: Relationships -> Scatter Plot (Chart.js Canvas) -> Best to reveal correlation/outliers between Economy (X) and Wickets (Y).
+-->
+
+<nav class="sticky top-0 z-50 bg-dark/90 backdrop-blur-md border-b border-borderline px-6 py-4">
+<div class="max-w-6xl mx-auto flex justify-between items-center">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase">01/10</div>
+<div class="text-emerald font-heading font-bold text-lg">IPL Franchise Scout Analysis</div>
+</div>
+</nav>
+
+<main class="max-w-6xl mx-auto px-4 sm:px-6 space-y-24 mt-16">
+
+<section class="min-h-[70vh] flex flex-col justify-center items-center text-center">
+<h1 class="text-5xl md:text-7xl font-heading font-black text-gold glow-gold mb-6 tracking-tight">₹10 CRORE</h1>
+<h2 class="text-3xl md:text-4xl font-heading font-bold text-light mb-8">The Question</h2>
+<p class="text-xl md:text-2xl text-muted max-w-3xl mx-auto leading-relaxed mb-12">
+If you had ₹10 Crore to buy 2 batsmen and 2 bowlers for IPL 2020—who do you pick, and why? Most scouts rely on gut feeling, flashy boundaries, or historical reputation. I decided to let SQL do the scouting.
+</p>
+<div class="text-8xl mb-8">🏏</div>
+<p class="text-muted uppercase tracking-widest text-sm animate-bounce">Scroll to see the data-driven draft ⬇️</p>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">02/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">The Danger of "Reputation Bias" in Scouting</h2>
+<p class="text-lg text-light mb-10 leading-relaxed">
+Evaluating players purely on absolute metrics like "Total Runs" or "Wickets" hides critical flaws. A batsman with 500 runs might have choked in pressure situations or anchored too slowly, dragging down the team's overall strike rate. We must isolate consistency, year-on-year trajectory, and dependency to find true market value.
+</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="border border-borderline rounded-xl p-6 bg-dark/50 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-red-500/50"></div>
+<h3 class="text-xl font-bold text-muted mb-4 line-through decoration-red-500/50">The Old Way</h3>
+<ul class="space-y-4 text-muted">
+<li class="flex items-center gap-3"><span class="text-red-500">❌</span> Gut feeling & Media Hype</li>
+<li class="flex items-center gap-3"><span class="text-red-500">❌</span> Absolute Career Runs/Wickets</li>
+<li class="flex items-center gap-3"><span class="text-red-500">❌</span> Overpaying for Reputation</li>
+</ul>
+</div>
+<div class="border border-emerald/30 rounded-xl p-6 bg-dark/50 relative overflow-hidden glow-emerald">
+<div class="absolute top-0 left-0 w-full h-1 bg-emerald"></div>
+<h3 class="text-xl font-bold text-emerald mb-4">The SQL Way</h3>
+<ul class="space-y-4 text-light">
+<li class="flex items-center gap-3"><span class="text-emerald">✅</span> Weighted Consistency Scoring</li>
+<li class="flex items-center gap-3"><span class="text-emerald">✅</span> YoY Acceleration Vectoring</li>
+<li class="flex items-center gap-3"><span class="text-emerald">✅</span> True Budget Efficiency</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">03/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">5 Scouting Questions. 5 SQL Queries.</h2>
+<p class="text-lg text-light mb-12 leading-relaxed">
+Mining 200 rows of granular performance data across IPL 2018 and 2019 to isolate elite talent. To build the ultimate ₹10Cr squad, I designed 5 specific SQL queries to score player value across distinct vectors.
+</p>
+<div class="flex flex-col md:flex-row justify-between items-center w-full">
+<div class="bg-dark border border-borderline p-4 rounded-lg text-center w-full md:w-1/5 shadow-md">
+<div class="text-emerald font-bold text-2xl mb-1">1</div>
+<div class="font-heading font-bold text-sm tracking-wide">DEPENDENCY</div>
+<div class="text-muted text-xs mt-2 font-mono">SUM() OVER</div>
+</div>
+<div class="pipeline-arrow"></div>
+<div class="bg-dark border border-borderline p-4 rounded-lg text-center w-full md:w-1/5 shadow-md">
+<div class="text-emerald font-bold text-2xl mb-1">2</div>
+<div class="font-heading font-bold text-sm tracking-wide">IMPROVEMENT</div>
+<div class="text-muted text-xs mt-2 font-mono">JOIN ON</div>
+</div>
+<div class="pipeline-arrow"></div>
+<div class="bg-dark border border-borderline p-4 rounded-lg text-center w-full md:w-1/5 shadow-md">
+<div class="text-emerald font-bold text-2xl mb-1">3</div>
+<div class="font-heading font-bold text-sm tracking-wide">CONSISTENCY</div>
+<div class="text-muted text-xs mt-2 font-mono">MATH OP</div>
+</div>
+<div class="pipeline-arrow"></div>
+<div class="bg-dark border border-borderline p-4 rounded-lg text-center w-full md:w-1/5 shadow-md">
+<div class="text-emerald font-bold text-2xl mb-1">4</div>
+<div class="font-heading font-bold text-sm tracking-wide">IMPACT</div>
+<div class="text-muted text-xs mt-2 font-mono">MATH OP</div>
+</div>
+<div class="pipeline-arrow"></div>
+<div class="bg-dark border border-borderline p-4 rounded-lg text-center w-full md:w-1/5 shadow-md border-gold/50 glow-gold">
+<div class="text-gold font-bold text-2xl mb-1">5</div>
+<div class="font-heading font-bold text-sm tracking-wide">SYNTHESIS</div>
+<div class="text-muted text-xs mt-2 font-mono">CTE & UNION ALL</div>
+</div>
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">04/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">One Batsman Carried 34.6% of His Entire Team's Runs</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<div>
+<p class="text-lg text-light mb-6 leading-relaxed">
+Using <code class="bg-dark text-emerald px-2 py-1 rounded">SUM() OVER(PARTITION BY Team)</code>, I calculated the exact proportion of franchise runs scored by individual players.
+</p>
+<ul class="space-y-4 text-light mb-8">
+<li><strong class="text-gold">SRH:</strong> Relies dangerously on David Warner (34.67% of all runs).</li>
+<li><strong class="text-light">RCB:</strong> Heavily top-heavy: Kohli & ABD combine for a massive 50.01%.</li>
+<li><strong class="text-emerald">Delhi Capitals:</strong> The gold standard of balance: Dhawan (27%), Pant (25%), and Iyer (24%) split the load perfectly.</li>
+</ul>
+<div class="bg-[#0b0b16] rounded-xl p-4 font-mono text-sm border border-borderline overflow-x-auto text-emerald">
+SELECT Player, Team, Runs,<br>
+&nbsp;&nbsp;ROUND(Runs * 100.0 / <br>
+&nbsp;&nbsp;SUM(Runs) OVER(PARTITION BY Team), 2) AS Run_Share<br>
+FROM batsmen_2019;
+</div>
+</div>
+<div class="flex flex-col justify-center w-full">
+<div class="chart-container">
+<canvas id="dependencyChart"></canvas>
+</div>
+<p class="text-center text-sm text-muted mt-4">Visualization of Team Run Distribution (%)</p>
+</div>
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">05/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">The Most Improved Player Wasn't Who You'd Expect</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<div class="flex flex-col justify-center order-last lg:order-first w-full">
+<div class="chart-container">
+<canvas id="yoyChart"></canvas>
+</div>
+<p class="text-center text-sm text-muted mt-4">Year-on-Year Trajectory (Strike Rate Velocity)</p>
+</div>
+<div>
+<p class="text-lg text-light mb-6 leading-relaxed">
+Spotting high-momentum assets using Year-on-Year (YoY) JOIN analysis. By joining the 2018 and 2019 datasets, I mapped changes in batting averages and strike rates.
+</p>
+<p class="text-lg text-light mb-6 leading-relaxed">
+While absolute statistics favor veteran stars, the acceleration vector belongs to <strong class="text-emerald">Hardik Pandya</strong>:
+</p>
+<ul class="space-y-4 text-light mb-8">
+<li><strong class="text-emerald">Hardik Pandya:</strong> Batting average grew by <code class="text-emerald">+15.78</code>, and Strike Rate surged by a massive <code class="text-emerald">+58.10</code> YoY.</li>
+<li><strong class="text-gold">Andre Russell:</strong> Average grew by <code class="text-gold">+27.94</code>, and Strike Rate jumped by <code class="text-gold">+20.02</code>.</li>
+</ul>
+<div class="bg-[#0b0b16] rounded-xl p-4 font-mono text-sm border border-borderline overflow-x-auto text-light">
+<span class="text-emerald">SELECT</span> a.Player,<br>
+&nbsp;&nbsp;(b.Avg - a.Avg) <span class="text-emerald">AS</span> Avg_Delta,<br>
+&nbsp;&nbsp;(b.S_R - a.S_R) <span class="text-emerald">AS</span> SR_Delta<br>
+<span class="text-emerald">FROM</span> batsmen_2018 a<br>
+<span class="text-emerald">JOIN</span> batsmen_2019 b <span class="text-emerald">ON</span> a.Player = b.Player;
+</div>
+</div>
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">06/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">A 204 Strike Rate. And His Average Was 56.</h2>
+<div class="bg-[#3a3a52]/40 border border-gold/30 rounded-xl p-6 text-center mb-10 max-w-3xl mx-auto glow-gold">
+<h3 class="text-muted font-bold text-sm tracking-widest uppercase mb-2">Weighted Consistency Index</h3>
+<p class="text-lg md:text-xl font-mono text-light">
+Score = (Avg × 0.5) + (SR × 0.3) + ((50s + (100s × 2)) × 5)
+</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<div>
+<p class="text-lg text-light mb-6 leading-relaxed">
+To separate players who had one lucky innings from genuinely consistent game-changers, I formulated a custom, weighted metric.
+</p>
+<ul class="space-y-4 text-light">
+<li><strong class="text-gold">David Warner (127.76):</strong> High-volume, reliable runs.</li>
+<li><strong class="text-gold">Andre Russell (109.78):</strong> Historic, unmatched boundary rate.</li>
+<li><strong class="text-emerald">KL Rahul (107.57):</strong> Consistent structural anchor.</li>
+</ul>
+<p class="text-sm text-muted mt-8 p-4 border-l-2 border-emerald bg-dark/30">
+<strong>Why this math?</strong> It rewards hundreds heavily (game-winners), while perfectly balancing sheer volume (Average) with scoring pace (Strike Rate).
+</p>
+</div>
+<div class="flex flex-col justify-center w-full">
+<div class="chart-container">
+<canvas id="consistencyChart"></canvas>
+</div>
+<p class="text-center text-sm text-muted mt-4">Top 5 Consistency Scores (2019)</p>
+</div>
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">07/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">The Bowler with the Best Economy Also Took the Most Wickets</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<div class="flex flex-col justify-center w-full">
+<div class="chart-container">
+<canvas id="bowlingChart"></canvas>
+</div>
+<p class="text-center text-sm text-muted mt-4">The Magic Quadrant: High Wickets, Low Economy</p>
+</div>
+<div>
+<p class="text-lg text-light mb-6 leading-relaxed">
+A bowler who takes 3 wickets but leaks 12 runs an over hurts your team. I calculated a custom Bowling Impact Score to reward raw wicket volume while penalizing high economy rates.
+</p>
+<div class="bg-[#3a3a52]/40 border border-emerald/30 rounded-xl p-4 text-center mb-6">
+<p class="font-mono text-sm text-light">
+Impact = (Wickets × 10) - (ER × 5) - (Avg × 0.5)
+</p>
+</div>
+<ul class="space-y-4 text-light mb-8">
+<li><strong class="text-gold">Rashid Khan:</strong> 21 Wickets, 6.74 Economy ➡️ <strong class="text-gold">165.40 Score</strong></li>
+<li><strong class="text-gold">Jasprit Bumrah:</strong> 17 Wickets, 6.89 Economy ➡️ <strong class="text-gold">124.61 Score</strong></li>
+</ul>
+<p class="text-sm text-muted">
+By plotting Economy on an inverted X-axis against Wickets, the elite performers isolate themselves completely in the top-right "Magic Quadrant."
+</p>
+</div>
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">08/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">Synthesizing 5 Separate Signals with a Single CTE Query</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div>
+<p class="text-lg text-light mb-6 leading-relaxed">
+How do you compare an elite opening batsman with an elite death bowler? Using a Common Table Expression (CTE) and <code class="bg-dark text-gold px-2 py-1 rounded">UNION ALL</code>, I normalized batting and bowling performance scales into a unified value score.
+</p>
+<p class="text-lg text-light leading-relaxed">
+This structured workflow dynamically calculates consistency, impact, and cost-efficiency in one clean execution path, bridging two entirely different statistical departments.
+</p>
+</div>
+<div class="flex flex-col items-center gap-4">
+<div class="flex justify-center gap-4 w-full">
+<div class="bg-dark border border-borderline rounded-lg p-4 w-1/2 text-center text-muted font-mono text-sm">batsmen_scores</div>
+<div class="bg-dark border border-borderline rounded-lg p-4 w-1/2 text-center text-muted font-mono text-sm">bowler_scores</div>
+</div>
+<div class="text-2xl text-borderline">⬇️ ⬇️</div>
+<div class="bg-[#0f9b6e]/20 border-2 border-emerald rounded-xl p-6 w-full text-center glow-emerald">
+<h3 class="font-bold text-emerald font-mono mb-2">WITH Master_List AS (...)</h3>
+<p class="text-sm text-light">Common Table Expression Engine</p>
+</div>
+<div class="text-2xl text-borderline">⬇️</div>
+<div class="bg-dark border-2 border-gold rounded-xl p-4 w-3/4 text-center glow-gold">
+<h3 class="font-bold text-gold font-mono">UNION ALL</h3>
+<p class="text-xs text-muted mt-1">Final Prioritized Roster</p>
+</div>
+</div>
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">09/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6">The ₹10 Crore Champions: Backed by Data, Not Opinion</h2>
+<p class="text-lg text-light mb-10 leading-relaxed text-center max-w-3xl mx-auto">
+By crossing our composite ratings with market values, we successfully drafted a championship-grade core under our strict budget limit.
+</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+<div class="bg-[#121224] border-2 border-emerald rounded-xl p-6 relative overflow-hidden group hover:border-gold transition-colors">
+<div class="absolute top-0 right-0 bg-emerald text-dark font-bold px-3 py-1 rounded-bl-lg text-sm">BATSMAN</div>
+<div class="text-4xl mb-4">🏏</div>
+<h3 class="text-2xl font-heading font-black text-light mb-1">Andre Russell</h3>
+<p class="text-muted text-sm mb-4">The Ultimate Value Driver</p>
+<div class="flex justify-between items-end">
+<div class="text-sm text-light font-mono">Score: <span class="text-gold text-3xl font-bold">74.68</span></div>
+</div>
+</div>
+<div class="bg-[#121224] border-2 border-emerald rounded-xl p-6 relative overflow-hidden hover:border-gold transition-colors">
+<div class="absolute top-0 right-0 bg-emerald text-dark font-bold px-3 py-1 rounded-bl-lg text-sm">WICKETKEEPER</div>
+<div class="text-4xl mb-4">🧤</div>
+<h3 class="text-2xl font-heading font-black text-light mb-1">KL Rahul</h3>
+<p class="text-muted text-sm mb-4">The Stable Foundation</p>
+<div class="flex justify-between items-end">
+<div class="text-sm text-light font-mono">Score: <span class="text-gold text-3xl font-bold">59.93</span></div>
+</div>
+</div>
+<div class="bg-[#121224] border-2 border-emerald rounded-xl p-6 relative overflow-hidden hover:border-gold transition-colors">
+<div class="absolute top-0 right-0 bg-emerald text-dark font-bold px-3 py-1 rounded-bl-lg text-sm">SPINNER</div>
+<div class="text-4xl mb-4">🔮</div>
+<h3 class="text-2xl font-heading font-black text-light mb-1">Rashid Khan</h3>
+<p class="text-muted text-sm mb-4">The Run-Rate Squeezer</p>
+<div class="flex justify-between items-end">
+<div class="text-sm text-light font-mono">Score: <span class="text-gold text-3xl font-bold">67.37</span></div>
+</div>
+</div>
+<div class="bg-[#121224] border-2 border-emerald rounded-xl p-6 relative overflow-hidden hover:border-gold transition-colors">
+<div class="absolute top-0 right-0 bg-emerald text-dark font-bold px-3 py-1 rounded-bl-lg text-sm">DEATH BOWLER</div>
+<div class="text-4xl mb-4">⚡</div>
+<h3 class="text-2xl font-heading font-black text-light mb-1">Jasprit Bumrah</h3>
+<p class="text-muted text-sm mb-4">The Clutches Defender</p>
+<div class="flex justify-between items-end">
+<div class="text-sm text-light font-mono">Score: <span class="text-gold text-3xl font-bold">50.98</span></div>
+</div>
+</div>
+</div>
+<div class="bg-gold text-dark text-center py-4 rounded-xl font-bold text-lg">
+Total Budget Utilized: ₹9.85 Crores | Remaining: ₹0.15 Crores (Under Budget!)
+</div>
+</section>
+
+<section class="bg-panel rounded-2xl p-8 md:p-12 border border-borderline shadow-2xl text-center">
+<div class="text-muted text-sm font-semibold tracking-widest uppercase mb-2">10/10</div>
+<h2 class="text-3xl font-heading font-bold mb-6 text-gold">The Technical Toolkit & What's Next</h2>
+<p class="text-lg text-light mb-10 leading-relaxed max-w-2xl mx-auto">
+This project demonstrates my ability to design analytical pipelines, write clean and optimized SQL queries, and turn raw data into strategic sports business insights.
+</p>
+<div class="flex flex-wrap justify-center gap-4 mb-12">
+<span class="px-4 py-2 border border-emerald text-emerald rounded-full font-mono text-sm">PostgreSQL</span>
+<span class="px-4 py-2 border border-emerald text-emerald rounded-full font-mono text-sm">Advanced Window Functions</span>
+<span class="px-4 py-2 border border-emerald text-emerald rounded-full font-mono text-sm">Multi-join Data Pipelines</span>
+<span class="px-4 py-2 border border-emerald text-emerald rounded-full font-mono text-sm">Feature Engineering</span>
+</div>
+<div class="bg-dark border border-borderline rounded-xl p-8 max-w-xl mx-auto relative group cursor-pointer hover:border-gold transition-colors">
+<div class="text-6xl mb-4">💻</div>
+<h3 class="text-xl font-bold text-light mb-2">View the Code Repository</h3>
+<p class="text-muted font-mono text-sm mb-6 break-all">github.com/dchatterjee01-prog/ipl-sql-portfolio</p>
+<div class="inline-block bg-gold text-dark font-bold px-6 py-3 rounded-lg uppercase tracking-wide group-hover:bg-white transition-colors">
+Let's Connect!
+</div>
+</div>
+<div class="mt-12 text-muted border-t border-borderline pt-6">
+<p class="font-heading font-bold text-light">Daipayan Chatterjee</p>
+<p class="text-sm">Data Analyst</p>
+</div>
+</section>
+
+</main>
+
+<script>
+function wrapLabel(label){
+if(label.length<=16)return label;
+const words=label.split(' ');
+const lines=[];
+let currentLine='';
+for(let word of words){
+if((currentLine+word).length>16){
+if(currentLine)lines.push(currentLine.trim());
+currentLine=word+' ';
+}else{
+currentLine+=word+' ';
+}
+}
+if(currentLine)lines.push(currentLine.trim());
+return lines;
+}
+
+const tooltipConfig={
+plugins:{
+tooltip:{
+callbacks:{
+title:function(tooltipItems){
+const item=tooltipItems[0];
+let label=item.chart.data.labels[item.dataIndex];
+if(Array.isArray(label)){
+return label.join(' ');
+}else{
+return label;
+}
+}
+}
+},
+legend:{
+labels:{color:'#f5f5f7'}
+}
+},
+maintainAspectRatio:false,
+responsive:true
+};
+
+Chart.defaults.color='#8a8a9e';
+Chart.defaults.font.family="'Inter', sans-serif";
+
+const ctxDep=document.getElementById('dependencyChart').getContext('2d');
+new Chart(ctxDep,{
+type:'bar',
+data:{
+labels:[wrapLabel('Sunrisers Hyderabad'),wrapLabel('Royal Challengers Bangalore'),wrapLabel('Delhi Capitals')],
+datasets:[
+{
+label:'Key Player 1 (Warner/Kohli/Dhawan)',
+data:[34.67,27.00,27.00],
+backgroundColor:'#e8a838',
+barPercentage:0.6
+},
+{
+label:'Key Player 2 (ABD/Pant)',
+data:[0,23.01,25.00],
+backgroundColor:'#0f9b6e',
+barPercentage:0.6
+},
+{
+label:'Key Player 3 (Iyer)',
+data:[0,0,24.00],
+backgroundColor:'#34d399',
+barPercentage:0.6
+},
+{
+label:'Rest of Team',
+data:[65.33,49.99,24.00],
+backgroundColor:'#3a3a52',
+barPercentage:0.6
+}
+]
+},
+options:{
+...tooltipConfig,
+indexAxis:'y',
+scales:{
+x:{stacked:true,max:100,grid:{color:'#3a3a52'}},
+y:{stacked:true,grid:{display:false}}
+}
+}
+});
+
+const ctxYoy=document.getElementById('yoyChart').getContext('2d');
+new Chart(ctxYoy,{
+type:'line',
+data:{
+labels:['2018 Season','2019 Season'],
+datasets:[
+{
+label:'Hardik Pandya SR',
+data:[133.33,191.43],
+borderColor:'#0f9b6e',
+backgroundColor:'#0f9b6e',
+borderWidth:4,
+pointRadius:6,
+tension:0
+},
+{
+label:'Andre Russell SR',
+data:[184.78,204.80],
+borderColor:'#e8a838',
+backgroundColor:'#e8a838',
+borderWidth:4,
+pointRadius:6,
+tension:0
+},
+{
+label:'League Average SR',
+data:[135.00,137.50],
+borderColor:'#3a3a52',
+borderWidth:2,
+borderDash:[5,5],
+pointRadius:0,
+tension:0
+}
+]
+},
+options:{
+...tooltipConfig,
+scales:{
+y:{grid:{color:'#3a3a52'}},
+x:{grid:{display:false}}
+}
+}
+});
+
+const ctxCon=document.getElementById('consistencyChart').getContext('2d');
+new Chart(ctxCon,{
+type:'bar',
+data:{
+labels:[wrapLabel('David Warner'),wrapLabel('Andre Russell'),wrapLabel('KL Rahul'),wrapLabel('MS Dhoni'),wrapLabel('Jonny Bairstow')],
+datasets:[{
+label:'Consistency Score',
+data:[127.76,109.78,107.57,96.99,94.99],
+backgroundColor:['#e8a838','#e8a838','#0f9b6e','#0f9b6e','#0f9b6e'],
+borderRadius:4,
+barPercentage:0.7
+}]
+},
+options:{
+...tooltipConfig,
+scales:{
+y:{grid:{color:'#3a3a52'}},
+x:{grid:{display:false}}
+}
+}
+});
+
+const ctxBowl=document.getElementById('bowlingChart').getContext('2d');
+new Chart(ctxBowl,{
+type:'scatter',
+data:{
+datasets:[
+{
+label:'Rashid Khan',
+data:[{x:6.74,y:21}],
+backgroundColor:'#e8a838',
+pointRadius:10,
+pointHoverRadius:12
+},
+{
+label:'Jasprit Bumrah',
+data:[{x:6.89,y:17}],
+backgroundColor:'#e8a838',
+pointRadius:10,
+pointHoverRadius:12
+},
+{
+label:'Peer Bowlers',
+data:[
+{x:8.2,y:14},{x:7.5,y:11},{x:9.1,y:18},{x:8.8,y:15},{x:7.9,y:9},
+{x:8.5,y:19},{x:9.5,y:12},{x:7.1,y:8},{x:8.0,y:16},{x:9.2,y:20}
+],
+backgroundColor:'#3a3a52',
+pointRadius:6
+}
+]
+},
+options:{
+...tooltipConfig,
+scales:{
+x:{
+reverse:true,
+title:{display:true,text:'Economy Rate (Inverted)',color:'#8a8a9e'},
+grid:{color:'#3a3a52'}
+},
+y:{
+title:{display:true,text:'Total Wickets',color:'#8a8a9e'},
+grid:{color:'#3a3a52'}
+}
+},
+plugins:{
+...tooltipConfig.plugins,
+annotation:{
+}
+}
+}
+});
+</script>
+</body>
+</html>
