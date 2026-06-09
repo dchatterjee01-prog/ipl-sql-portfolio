@@ -17,7 +17,7 @@
 
 <br>
 
-[📊 View Presentation](outputs/ipl_presentation.html) &nbsp;·&nbsp; [📄 Scout Report](outputs/scout_report.md) &nbsp;·&nbsp; [🗄️ SQL Queries](queries/)
+[📊 View Presentation](https://cheery-cranachan-51ca07.netlify.app/outputs/ipl_presentation.html) &nbsp;·&nbsp; [📄 Scout Report](outputs/scout_report.md) &nbsp;·&nbsp; [🗄️ SQL Queries](queries/)
 
 </div>
 
